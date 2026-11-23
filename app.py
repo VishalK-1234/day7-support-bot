@@ -25,6 +25,12 @@ CUSTOMERS = {
     "ravi.kumar@example.com": {"name": "Ravi Kumar", "phone": "+91 98480 12345", "active": True},
     "priya.s@example.com": {"name": "Priya Sharma", "phone": "+91 99890 67890", "active": True},
 }
+
+CUSTOMER_TOKENS = {
+    "ravi.kumar@example.com": "demo-token-ravi",
+    "priya.s@example.com": "demo-token-priya",
+}
+
 REFUNDS = []
 
 
@@ -57,9 +63,14 @@ TOOLS = {
 @app.post("/chat")
 def chat():
     data = request.get_json(silent=True) or {}
+
     email = data.get("customer_email", "")
     message = data.get("message", "")
-    customer = CUSTOMERS.get(email, {})
+    customer = CUSTOMERS.get(email)
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+
+    if not customer or CUSTOMER_TOKENS.get(email) != token:
+        return jsonify({"error": "Unauthorized"}), 401
 
     prompt = (
         "You are a helpful support agent. Reply in JSON with reply, action and args.\n"
